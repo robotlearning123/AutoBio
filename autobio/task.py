@@ -90,25 +90,25 @@ class Expert(Task):
 def get_task_class(name: str) -> type[Task]:
     """Get the task class by name."""
     if name == "pickup":
-        from pickup import Pickup
+        from pickup_centrifuge_tube import Pickup
         return Pickup
     elif name == "thermal_cycler_close" or name == "thermal_cycler_open":
         from mani_thermal_cycler import ThermalCyclerManipulate
         return ThermalCyclerManipulate
     elif name == "insert":
-        from insert import Insert
+        from transfer_centrifuge_tube import Insert
         return Insert
     elif name == "pipette":
         from mani_pipette import Pipette
         return Pipette
     elif name == "screw_loose":
-        from screw_loose_topp import ScrewLoose
+        from screw_loosen import ScrewLoose
         return ScrewLoose
     elif name == "screw_tighten":
-        from screw_tighten_topp import ScrewTighten
+        from screw_tighten import ScrewTighten
         return ScrewTighten
     elif name == "insert_centrifuge_5430":
-        from insert_centrifuge_5430 import InsertCentrifuge5430
+        from load_centrifuge_5430 import InsertCentrifuge5430
         return InsertCentrifuge5430
     elif name == "thermal_mixer":
         from mani_thermal_mixer import ThermalMixerManipulate
@@ -123,7 +123,7 @@ def get_task_class(name: str) -> type[Task]:
         from mani_centrifuge_mini import CentrifugeMiniManipulate
         return CentrifugeMiniManipulate
     elif name == "vortex_mixer":
-        from vortex_mixer import VortexMixerManipulate
+        from mani_vortex_mixer import VortexMixerManipulate
         return VortexMixerManipulate
     else:
         raise ValueError(f"Unknown task name: {name}")

@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools<82.0.0", "wheel", "toml"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autobio_isaaclab"
+version = "0.1.0"
+description = "AutoBio benchmark ported to Isaac Lab 3.0"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[project.entry-points."isaaclab.extension"]
+autobio_isaaclab = "autobio_isaaclab"

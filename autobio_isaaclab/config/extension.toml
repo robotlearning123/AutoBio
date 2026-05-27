@@ -1,0 +1,17 @@
+[package]
+version = "0.1.0"
+title = "AutoBio Isaac Lab Environments"
+description = "AutoBio biology lab manipulation benchmark ported to Isaac Lab 3.0"
+readme = "README.md"
+repository = "https://github.com/robotlearning123/AutoBio"
+category = "robotics"
+keywords = ["robotics", "biology", "lab", "manipulation", "vla"]
+
+[dependencies]
+"isaaclab" = {}
+
+[core]
+reloadable = false
+
+[[python.module]]
+name = "autobio_isaaclab"
