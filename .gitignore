@@ -9,3 +9,6 @@ logs/
 *_result.json
 *_v5_result.json
 review_frames/
+debug_*.txt
+*_summary.json
+usd_assets_physx/
