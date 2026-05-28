@@ -4,11 +4,10 @@ from __future__ import annotations
 
 from isaaclab.envs import DirectRLEnvCfg
 from isaaclab.scene import InteractiveSceneCfg
-from isaaclab.sim import SimulationCfg
+from isaaclab.sim import SimulationCfg, PhysxCfg
 from isaaclab.utils.configclass import configclass
 
 from isaaclab.assets import ArticulationCfg
-from isaaclab_physx.physics import PhysxCfg
 
 from ..assets.aloha import ALOHA_CFG
 
@@ -28,7 +27,7 @@ class AutobioEnvCfg(DirectRLEnvCfg):
     sim: SimulationCfg = SimulationCfg(
         dt=1 / 250,
         render_interval=decimation,
-        physics=PhysxCfg(
+        physx=PhysxCfg(
             solver_type=1,
             max_position_iteration_count=64,
             max_velocity_iteration_count=16,

@@ -62,7 +62,7 @@ def main():
     import autobio_isaaclab
 
     # Create environment
-    env = gym.make(args.task, num_envs=args.num_envs, cfg={"seed": args.seed})
+    env = gym.make(args.task, num_envs=args.num_envs)
 
     print(f"Created environment: {args.task}")
     print(f"  Num envs: {args.num_envs}")

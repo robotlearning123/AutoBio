@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoBio Dual Simulator Demo</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f1117; color: #e0e0e0; }
+.hero { background: linear-gradient(135deg, #1a1d2e 0%, #2d1b4e 50%, #1a2d3e 100%); padding: 40px 32px 24px; border-bottom: 1px solid #2a2d3a; }
+.hero h1 { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+.hero .subtitle { font-size: 14px; color: #8b8fa3; margin-bottom: 16px; }
+.stats { display: flex; gap: 24px; flex-wrap: wrap; }
+.stat { background: rgba(255,255,255,0.05); border-radius: 8px; padding: 10px 16px; min-width: 120px; }
+.stat .label { font-size: 11px; color: #6b7084; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat .value { font-size: 22px; font-weight: 600; color: #a78bfa; margin-top: 2px; }
+.filters { padding: 16px 32px; display: flex; gap: 8px; border-bottom: 1px solid #1e2030; background: #12141e; position: sticky; top: 0; z-index: 10; }
+.filter-btn { background: rgba(255,255,255,0.05); border: 1px solid #2a2d3a; color: #8b8fa3; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.15s; }
+.filter-btn:hover { background: rgba(167,139,250,0.1); color: #a78bfa; border-color: #a78bfa; }
+.filter-btn.active { background: rgba(167,139,250,0.15); color: #a78bfa; border-color: #a78bfa; }
+.grid { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 24px 32px 48px; max-width: 1200px; margin: 0 auto; }
+.card { background: #181b28; border: 1px solid #2a2d3a; border-radius: 10px; overflow: hidden; transition: border-color 0.2s; }
+.card:hover { border-color: #4a4d5a; }
+.card-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px 10px; }
+.card-header h3 { font-size: 16px; font-weight: 600; color: #fff; }
+.badge { background: rgba(167,139,250,0.15); color: #a78bfa; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+.isaac-badge { background: rgba(52,211,153,0.15); color: #34d399; margin-top: 4px; display: inline-block; }
+.card-body { padding: 0 18px 14px; }
+.video-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.video-panel { text-align: center; }
+.video-label { font-size: 12px; color: #8b8fa3; margin-bottom: 6px; font-weight: 500; }
+.demo-video { width: 100%; border-radius: 6px; background: #000; max-height: 280px; }
+.video-meta { font-size: 11px; color: #5a5e72; margin-top: 4px; }
+.video-panel.missing { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 160px; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1px dashed #2a2d3a; }
+.missing-text { color: #4a4d5a; font-size: 13px; margin-top: 8px; }
+.card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+.robot-ur { background: rgba(96,165,250,0.15); color: #60a5fa; }
+.robot-aloha { background: rgba(244,114,182,0.15); color: #f472b6; }
+.render-warn { background: rgba(248,113,113,0.08); color: #fca5a5; padding: 8px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 10px; border-left: 3px solid #f87171; }
+@media (max-width: 768px) { .video-row { grid-template-columns: 1fr; } .grid { padding: 16px; gap: 16px; } }
+</style>
+</head>
+<body>
+<div class="hero">
+  <h1>AutoBio Dual Simulator Demo</h1>
+  <p class="subtitle">MuJoCo 3.3.0 (EGL) vs Isaac Sim 5.1 (RTX) | Newton USD | 1280x720 @ 24fps | Honest scoring (frame-inspected 2026-05-28)</p>
+  <div class="stats">
+    <div class="stat"><div class="label">MuJoCo Videos</div><div class="value">10/10</div></div>
+    <div class="stat"><div class="label">Isaac Videos</div><div class="value">10/10</div></div>
+    <div class="stat"><div class="label">UR Full Arm</div><div class="value" style="color:#60a5fa">6/10</div></div>
+    <div class="stat"><div class="label">ALOHA Arm WIP</div><div class="value" style="color:#f472b6">4/10</div></div>
+  </div>
+</div>
+<div class="filters">
+  <button class="filter-btn active" onclick="filter('all',this)">All (10)</button>
+  <button class="filter-btn" onclick="filter('Grasp',this)">Grasp</button>
+  <button class="filter-btn" onclick="filter('Insertion',this)">Insertion</button>
+  <button class="filter-btn" onclick="filter('Articulated',this)">Articulated</button>
+  <button class="filter-btn" onclick="filter('Rotary',this)">Rotary</button>
+  <button class="filter-btn" onclick="filter('Liquid',this)">Liquid</button>
+</div>
+<div class="grid">
+
+    <div class="card" data-cat="Insertion" data-score="7" data-robot="ur">
+      <div class="card-header">
+        <h3>Insert into Centrifuge 5430</h3>
+        <div class="card-meta">
+          <span class="badge">Insertion</span>
+          <span class="badge robot-ur">UR5e + 2f85</span>
+          <span class="badge score" style="background:#34d39922;color:#34d399;border:1px solid #34d39955">Isaac 7/10</span>
+        </div>
+      </div>
+      <div class="card-body">
+        
+        <div class="video-row">
+          
+            <div class="video-panel">
+              <div class="video-label">MuJoCo 3.3 (EGL)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="insert_centrifuge_5430.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">873 KB</div>
+            </div>
+          
+            <div class="video-panel">
+              <div class="video-label">Isaac Sim 5.1 (RTX)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="insert_centrifuge_5430_isaac.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">175 KB | 107c | anim d=47.6</div>
+              <span class="badge isaac-badge">animated</span>
+            </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" data-cat="Insertion" data-score="6" data-robot="ur">
+      <div class="card-header">
+        <h3>Insert Centrifuge Tube</h3>
+        <div class="card-meta">
+          <span class="badge">Insertion</span>
+          <span class="badge robot-ur">UR5e + 2f85</span>
+          <span class="badge score" style="background:#34d39922;color:#34d399;border:1px solid #34d39955">Isaac 6/10</span>
+        </div>
+      </div>
+      <div class="card-body">
+        
+        <div class="video-row">
+          
+            <div class="video-panel">
+              <div class="video-label">MuJoCo 3.3 (EGL)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="insert.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">1121 KB</div>
+            </div>
+          
+            <div class="video-panel">
+              <div class="video-label">Isaac Sim 5.1 (RTX)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="insert_isaac.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">153 KB | 33c | anim d=17.5</div>
+              <span class="badge isaac-badge">animated</span>
+            </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" data-cat="Liquid" data-score="6" data-robot="ur">
+      <div class="card-header">
+        <h3>Pipette Liquid Transfer</h3>
+        <div class="card-meta">
+          <span class="badge">Liquid</span>
+          <span class="badge robot-ur">UR5e + 2f85</span>
+          <span class="badge score" style="background:#34d39922;color:#34d399;border:1px solid #34d39955">Isaac 6/10</span>
+        </div>
+      </div>
+      <div class="card-body">
+        
+        <div class="video-row">
+          
+            <div class="video-panel">
+              <div class="video-label">MuJoCo 3.3 (EGL)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="pipette.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">1303 KB</div>
+            </div>
+          
+            <div class="video-panel">
+              <div class="video-label">Isaac Sim 5.1 (RTX)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="pipette_isaac.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">246 KB | 59c | anim d=34.4</div>
+              <span class="badge isaac-badge">animated</span>
+            </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" data-cat="Articulated" data-score="6" data-robot="ur">
+      <div class="card-header">
+        <h3>Open Thermal Cycler</h3>
+        <div class="card-meta">
+          <span class="badge">Articulated</span>
+          <span class="badge robot-ur">UR5e + 2f85</span>
+          <span class="badge score" style="background:#34d39922;color:#34d399;border:1px solid #34d39955">Isaac 6/10</span>
+        </div>
+      </div>
+      <div class="card-body">
+        
+        <div class="video-row">
+          
+            <div class="video-panel">
+              <div class="video-label">MuJoCo 3.3 (EGL)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="thermal_cycler_open.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">1163 KB</div>
+            </div>
+          
+            <div class="video-panel">
+              <div class="video-label">Isaac Sim 5.1 (RTX)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="thermal_cycler_open_isaac.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">203 KB | 40c | anim d=20.4</div>
+              <span class="badge isaac-badge">animated</span>
+            </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" data-cat="Articulated" data-score="6" data-robot="ur">
+      <div class="card-header">
+        <h3>Close Thermal Cycler</h3>
+        <div class="card-meta">
+          <span class="badge">Articulated</span>
+          <span class="badge robot-ur">UR5e + 2f85</span>
+          <span class="badge score" style="background:#34d39922;color:#34d399;border:1px solid #34d39955">Isaac 6/10</span>
+        </div>
+      </div>
+      <div class="card-body">
+        
+        <div class="video-row">
+          
+            <div class="video-panel">
+              <div class="video-label">MuJoCo 3.3 (EGL)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="thermal_cycler_close.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">1530 KB</div>
+            </div>
+          
+            <div class="video-panel">
+              <div class="video-label">Isaac Sim 5.1 (RTX)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="thermal_cycler_close_isaac.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">228 KB | 40c | anim d=20.4</div>
+              <span class="badge isaac-badge">animated</span>
+            </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" data-cat="Articulated" data-score="6" data-robot="ur">
+      <div class="card-header">
+        <h3>Thermal Mixer Operation</h3>
+        <div class="card-meta">
+          <span class="badge">Articulated</span>
+          <span class="badge robot-ur">UR5e + 2f85</span>
+          <span class="badge score" style="background:#34d39922;color:#34d399;border:1px solid #34d39955">Isaac 6/10</span>
+        </div>
+      </div>
+      <div class="card-body">
+        
+        <div class="video-row">
+          
+            <div class="video-panel">
+              <div class="video-label">MuJoCo 3.3 (EGL)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="thermal_mixer.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">957 KB</div>
+            </div>
+          
+            <div class="video-panel">
+              <div class="video-label">Isaac Sim 5.1 (RTX)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="thermal_mixer_isaac.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">201 KB | 31c | anim d=20.4</div>
+              <span class="badge isaac-badge">animated</span>
+            </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" data-cat="Grasp" data-score="3" data-robot="aloha">
+      <div class="card-header">
+        <h3>Pickup Centrifuge Tube</h3>
+        <div class="card-meta">
+          <span class="badge">Grasp</span>
+          <span class="badge robot-aloha">ALOHA vx300s</span>
+          <span class="badge score" style="background:#f8717122;color:#f87171;border:1px solid #f8717155">Isaac 3/10</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="render-warn">Known issue: ALOHA arm body not rendered (UR works; root cause WIP). Gripper shown as end-effector preview.</div>
+        <div class="video-row">
+          
+            <div class="video-panel">
+              <div class="video-label">MuJoCo 3.3 (EGL)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="pickup.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">307 KB</div>
+            </div>
+          
+            <div class="video-panel">
+              <div class="video-label">Isaac Sim 5.1 (RTX)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="pickup_isaac.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">107 KB | 16c | anim d=3.2</div>
+              <span class="badge isaac-badge">animated</span>
+            </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" data-cat="Rotary" data-score="3" data-robot="aloha">
+      <div class="card-header">
+        <h3>Loosen Screw Cap</h3>
+        <div class="card-meta">
+          <span class="badge">Rotary</span>
+          <span class="badge robot-aloha">ALOHA vx300s</span>
+          <span class="badge score" style="background:#f8717122;color:#f87171;border:1px solid #f8717155">Isaac 3/10</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="render-warn">Known issue: ALOHA arm body not rendered (UR works; root cause WIP). Gripper shown as end-effector preview.</div>
+        <div class="video-row">
+          
+            <div class="video-panel">
+              <div class="video-label">MuJoCo 3.3 (EGL)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="screw_loose.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">942 KB</div>
+            </div>
+          
+            <div class="video-panel">
+              <div class="video-label">Isaac Sim 5.1 (RTX)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="screw_loose_isaac.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">98 KB | 29c | anim d=3.7</div>
+              <span class="badge isaac-badge">animated</span>
+            </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" data-cat="Rotary" data-score="3" data-robot="aloha">
+      <div class="card-header">
+        <h3>Tighten Screw Cap</h3>
+        <div class="card-meta">
+          <span class="badge">Rotary</span>
+          <span class="badge robot-aloha">ALOHA vx300s</span>
+          <span class="badge score" style="background:#f8717122;color:#f87171;border:1px solid #f8717155">Isaac 3/10</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="render-warn">Known issue: ALOHA arm body not rendered (UR works; root cause WIP). Gripper shown as end-effector preview.</div>
+        <div class="video-row">
+          
+            <div class="video-panel">
+              <div class="video-label">MuJoCo 3.3 (EGL)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="screw_tighten.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">1173 KB</div>
+            </div>
+          
+            <div class="video-panel">
+              <div class="video-label">Isaac Sim 5.1 (RTX)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="screw_tighten_isaac.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">105 KB | 29c | anim d=3.7</div>
+              <span class="badge isaac-badge">animated</span>
+            </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" data-cat="Rotary" data-score="4" data-robot="aloha">
+      <div class="card-header">
+        <h3>Vortex Mixer</h3>
+        <div class="card-meta">
+          <span class="badge">Rotary</span>
+          <span class="badge robot-aloha">ALOHA vx300s</span>
+          <span class="badge score" style="background:#f8717122;color:#f87171;border:1px solid #f8717155">Isaac 4/10</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="render-warn">Known issue: ALOHA arm body not rendered (UR works; root cause WIP). Gripper shown as end-effector preview.</div>
+        <div class="video-row">
+          
+            <div class="video-panel">
+              <div class="video-label">MuJoCo 3.3 (EGL)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="vortex_mixer.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">158 KB</div>
+            </div>
+          
+            <div class="video-panel">
+              <div class="video-label">Isaac Sim 5.1 (RTX)</div>
+              <video controls preload="metadata" class="demo-video">
+                <source src="vortex_mixer_isaac.mp4" type="video/mp4">
+              </video>
+              <div class="video-meta">99 KB | 39c | static</div>
+              <span class="badge isaac-badge">colored</span>
+            </div>
+        </div>
+      </div>
+    </div>
+</div>
+<script>
+function filter(cat, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.card').forEach(c => {
+    if (cat === 'all' || c.dataset.cat === cat) c.style.display = '';
+    else c.style.display = 'none';
+  });
+}
+</script>
+</body>
+</html>

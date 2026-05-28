@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pkl
+*.blend
+logs/
+*.mp4
+*.png
+*.npz
+*_result.json
+*_v5_result.json
+review_frames/

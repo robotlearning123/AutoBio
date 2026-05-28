@@ -31,6 +31,9 @@ class AutobioEnv(DirectRLEnv):
     cfg: AutobioEnvCfg
 
     def __init__(self, cfg: AutobioEnvCfg, render_mode: str | None = None, **kwargs):
+        # Allow num_envs override from gym.make()
+        if "num_envs" in kwargs:
+            cfg.scene.num_envs = kwargs.pop("num_envs")
         super().__init__(cfg, render_mode, **kwargs)
 
         # Joint indices (populated in subclasses)

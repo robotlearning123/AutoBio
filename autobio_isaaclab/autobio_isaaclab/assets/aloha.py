@@ -23,14 +23,14 @@ _ALOHA_USD = os.path.join(_USD_DIR, "aloha_left", "aloha_left.usd")
 
 # ALOHA joint names (matching MJCF naming with prefix)
 ALOHA_JOINT_NAMES = [
-    "left/waist",
-    "left/shoulder",
-    "left/elbow",
-    "left/forearm_roll",
-    "left/wrist_angle",
-    "left/wrist_rotate",
-    "left/left_finger",
-    "left/right_finger",
+    "left_waist",
+    "left_shoulder",
+    "left_elbow",
+    "left_forearm_roll",
+    "left_wrist_angle",
+    "left_wrist_rotate",
+    "left_left_finger",
+    "left_right_finger",
 ]
 
 # Actuator group definitions with kp/kv from MJCF defaults
@@ -38,41 +38,41 @@ ALOHA_ACTUATOR_GROUPS = {
     # Arm joints - position control
     "arm": {
         "joint_names_expr": [
-            "left/waist",
-            "left/shoulder",
-            "left/elbow",
-            "left/forearm_roll",
-            "left/wrist_angle",
-            "left/wrist_rotate",
+            "left_waist",
+            "left_shoulder",
+            "left_elbow",
+            "left_forearm_roll",
+            "left_wrist_angle",
+            "left_wrist_rotate",
         ],
         "stiffness": {
-            "left/waist": 43.0,
-            "left/shoulder": 265.0,
-            "left/elbow": 227.0,
-            "left/forearm_roll": 78.0,
-            "left/wrist_angle": 37.0,
-            "left/wrist_rotate": 10.4,
+            "left_waist": 43.0,
+            "left_shoulder": 265.0,
+            "left_elbow": 227.0,
+            "left_forearm_roll": 78.0,
+            "left_wrist_angle": 37.0,
+            "left_wrist_rotate": 10.4,
         },
         "damping": {
-            "left/waist": 5.76,
-            "left/shoulder": 20.0,
-            "left/elbow": 18.49,
-            "left/forearm_roll": 6.78,
-            "left/wrist_angle": 6.28,
-            "left/wrist_rotate": 1.2,
+            "left_waist": 5.76,
+            "left_shoulder": 20.0,
+            "left_elbow": 18.49,
+            "left_forearm_roll": 6.78,
+            "left_wrist_angle": 6.28,
+            "left_wrist_rotate": 1.2,
         },
         "effort_limit": {
-            "left/waist": 35.0,
-            "left/shoulder": 144.0,
-            "left/elbow": 59.0,
-            "left/forearm_roll": 22.0,
-            "left/wrist_angle": 35.0,
-            "left/wrist_rotate": 35.0,
+            "left_waist": 35.0,
+            "left_shoulder": 144.0,
+            "left_elbow": 59.0,
+            "left_forearm_roll": 22.0,
+            "left_wrist_angle": 35.0,
+            "left_wrist_rotate": 35.0,
         },
     },
     # Gripper joints - position control with high stiffness
     "gripper": {
-        "joint_names_expr": ["left/left_finger", "left/right_finger"],
+        "joint_names_expr": ["left_left_finger", "left_right_finger"],
         "stiffness": 2000.0,
         "damping": 124.0,
         "effort_limit": 35.0,
@@ -113,6 +113,51 @@ def _build_aloha_cfg() -> ArticulationCfg:
                 )
             )
 
+    # Per-joint actuator configs
+    arm_joint_names = [
+        "left_waist", "left_shoulder", "left_elbow",
+        "left_forearm_roll", "left_wrist_angle", "left_wrist_rotate",
+    ]
+    stiffness_map = {
+        "left_waist": 43.0,
+        "left_shoulder": 265.0,
+        "left_elbow": 227.0,
+        "left_forearm_roll": 78.0,
+        "left_wrist_angle": 37.0,
+        "left_wrist_rotate": 10.4,
+    }
+    damping_map = {
+        "left_waist": 5.76,
+        "left_shoulder": 20.0,
+        "left_elbow": 18.49,
+        "left_forearm_roll": 6.78,
+        "left_wrist_angle": 6.28,
+        "left_wrist_rotate": 1.2,
+    }
+    effort_map = {
+        "left_waist": 35.0,
+        "left_shoulder": 144.0,
+        "left_elbow": 59.0,
+        "left_forearm_roll": 22.0,
+        "left_wrist_angle": 35.0,
+        "left_wrist_rotate": 35.0,
+    }
+
+    actuators = {}
+    for jname in arm_joint_names:
+        actuators[jname] = ImplicitActuatorCfg(
+            joint_names_expr=[jname],
+            stiffness=stiffness_map[jname],
+            damping=damping_map[jname],
+            effort_limit=effort_map[jname],
+        )
+    actuators["gripper"] = ImplicitActuatorCfg(
+        joint_names_expr=["left_left_finger", "left_right_finger"],
+        stiffness=2000.0,
+        damping=124.0,
+        effort_limit=35.0,
+    )
+
     cfg = ArticulationCfg(
         spawn=sim_utils.UsdFileCfg(
             usd_path=_ALOHA_USD,
@@ -128,70 +173,18 @@ def _build_aloha_cfg() -> ArticulationCfg:
         ),
         init_state=ArticulationCfg.InitialStateCfg(
             joint_pos={
-                "left/waist": 0.0,
-                "left/shoulder": -0.96,
-                "left/elbow": 1.16,
-                "left/forearm_roll": 0.0,
-                "left/wrist_angle": -0.3,
-                "left/wrist_rotate": 0.0,
-                "left/left_finger": 0.0084,
-                "left/right_finger": 0.0084,
+                "left_waist": 0.0,
+                "left_shoulder": -0.96,
+                "left_elbow": 1.16,
+                "left_forearm_roll": 0.0,
+                "left_wrist_angle": -0.3,
+                "left_wrist_rotate": 0.0,
+                "left_left_finger": 0.0084,
+                "left_right_finger": 0.0084,
             },
         ),
-        actuators={
-            "arm": ImplicitActuatorCfg(
-                joint_names_expr=[
-                    "left/waist",
-                    "left/shoulder",
-                    "left/elbow",
-                    "left/forearm_roll",
-                    "left/wrist_angle",
-                    "left/wrist_rotate",
-                ],
-                stiffness=43.0,  # Default, overridden per-joint below
-                damping=5.76,
-            ),
-            "gripper": ImplicitActuatorCfg(
-                joint_names_expr=["left/left_finger", "left/right_finger"],
-                stiffness=2000.0,
-                damping=124.0,
-            ),
-        },
+        actuators=actuators,
     )
-
-    # Override per-joint stiffness/damping for arm group
-    arm_actuator = cfg.actuators["arm"]
-    stiffness_map = {
-        "left/waist": 43.0,
-        "left/shoulder": 265.0,
-        "left/elbow": 227.0,
-        "left/forearm_roll": 78.0,
-        "left/wrist_angle": 37.0,
-        "left/wrist_rotate": 10.4,
-    }
-    damping_map = {
-        "left/waist": 5.76,
-        "left/shoulder": 20.0,
-        "left/elbow": 18.49,
-        "left/forearm_roll": 6.78,
-        "left/wrist_angle": 6.28,
-        "left/wrist_rotate": 1.2,
-    }
-    effort_map = {
-        "left/waist": 35.0,
-        "left/shoulder": 144.0,
-        "left/elbow": 59.0,
-        "left/forearm_roll": 22.0,
-        "left/wrist_angle": 35.0,
-        "left/wrist_rotate": 35.0,
-    }
-
-    # Store as metadata for runtime use
-    cfg.metadata = {
-        "stiffness_map": stiffness_map,
-        "damping_map": damping_map,
-        "effort_map": effort_map,
-    }
 
     return cfg
 
