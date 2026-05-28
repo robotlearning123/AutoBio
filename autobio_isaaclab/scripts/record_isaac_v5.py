@@ -239,10 +239,28 @@ def record_animated(task_name: str) -> dict:
         if has_traj:
             root_prim = stage.GetPrimAtPath(prim_root)
             if root_prim.IsValid():
-                xform_prims = {}
+                # Collect ALL Xform prims with name -> list of (depth, path)
+                # to handle name collisions (e.g., 'base' appears at multiple levels)
+                from collections import defaultdict
+                xform_prims_multi = defaultdict(list)
                 for p in Usd.PrimRange(root_prim):
                     if p.GetTypeName() == "Xform":
-                        xform_prims[p.GetName()] = p.GetPath().pathString
+                        path = p.GetPath().pathString
+                        depth = path.count("/")
+                        xform_prims_multi[p.GetName()].append((depth, path))
+
+                # Build single-name dict preferring shallowest (shortest depth) match
+                xform_prims = {}
+                for name, entries in xform_prims_multi.items():
+                    entries.sort(key=lambda x: x[0])
+                    xform_prims[name] = entries[0][1]
+
+                # Also build a separate "deep" dict for fallback
+                xform_prims_all = {}
+                for name, entries in xform_prims_multi.items():
+                    for depth, path in entries:
+                        key = f"{name}_{depth}"
+                        xform_prims_all[key] = path
 
                 # Pass 1: exact key match (with prefix)
                 for i, bn in enumerate(body_names):
@@ -253,6 +271,7 @@ def record_animated(task_name: str) -> dict:
                         body_prim_map[i] = xform_prims[usd_key]
 
                 # Pass 2: try without prefix (e.g., 'shoulder_link' instead of 'ur_shoulder_link')
+                # Use SHALLOWEST match to prefer robot base over gripper base
                 for i, bn in enumerate(body_names):
                     if i in body_prim_map or bn == "world":
                         continue
@@ -262,7 +281,7 @@ def record_animated(task_name: str) -> dict:
                     if last_part in xform_prims:
                         body_prim_map[i] = xform_prims[last_part]
 
-                # Pass 3: fuzzy match on last segment
+                # Pass 3: fuzzy match on last segment (still shallowest first)
                 for i, bn in enumerate(body_names):
                     if i in body_prim_map or bn == "world":
                         continue
